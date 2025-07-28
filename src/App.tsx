@@ -1,12 +1,10 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import Home from "./pages/Home/Home";
 
 function App() {
   return (
-<h1 className="text-3xl font-bold underline">
-      Vitha 
-    </h1>
+    <div className="bg-slate-200 dark:bg-slate-900 font-body text-gray-800 dark:text-white">
+      <Home></Home>
+    </div>
   );
 }
 
