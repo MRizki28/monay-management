@@ -42,12 +42,15 @@ export default function Modal({ onClose }: { onClose: () => void }) {
                 nama: namaUser,
             });
 
-            const tabunganRef = ref(db, `totalTabungan/${userId}`);
+            const tabunganRef = ref(db, `totalTabungan`);
             const tabunganSnap = await get(tabunganRef);
             const currentTotal = tabunganSnap.exists() ? tabunganSnap.val() : 0;
 
             const updatedTotal = currentTotal + rawNominal;
 
+            console.log("Total Tabungan Sebelumnya:", currentTotal);
+            console.log("Nominal Pemasukan:", rawNominal);
+            console.log("Total Tabungan Setelah Update:", updatedTotal);
             await set(tabunganRef, updatedTotal);
 
             alert("Pemasukan berhasil disimpan!");
