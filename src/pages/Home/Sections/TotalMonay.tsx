@@ -18,8 +18,7 @@ export default function TotalMonay() {
             get(dataRef).then((snapshot) => {
                 if (snapshot.exists()) {
                     const data = snapshot.val();
-                    const firstKey = Object.keys(data)[0];
-                    const dataTotal = data[firstKey];
+                    const dataTotal = typeof data === "number" ? data : 0;
                     setTotal(dataTotal);
                 } else {
                     setTotal(0);
