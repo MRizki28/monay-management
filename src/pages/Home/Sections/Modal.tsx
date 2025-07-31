@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getDatabase, ref, push, get, set } from "firebase/database";
+import { getDatabase, ref, push, get, set, runTransaction } from "firebase/database";
 import { toast } from "react-toastify";
 import database from "../../../config/firebase";
 
@@ -15,59 +15,58 @@ export default function Modal({ onClose }: { onClose: () => void }) {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-
+    
         try {
             const db = database;
             const userId = localStorage.getItem("userId");
-
+    
             if (!userId) {
                 toast.error("User tidak ditemukan di session.");
                 return;
             }
-
+    
             const userSnap = await get(ref(db, `users/${userId}`));
             if (!userSnap.exists()) {
                 toast.error("Data user tidak ditemukan.");
                 return;
             }
-
+    
             const userData = userSnap.val();
             const namaUser = userData.name || "Tanpa Nama";
-
+    
+            // Simpan pemasukan baru
             const pemasukanRef = ref(db, "pemasukan");
             await push(pemasukanRef, {
                 tanggal,
-                nominal: rawNominal, // <--- disimpan sebagai angka
+                nominal: rawNominal, // disimpan sebagai angka
                 userId,
                 nama: namaUser,
             });
-
+    
+            // Update totalTabungan secara aman (tanpa race condition)
             const tabunganRef = ref(db, `totalTabungan`);
-            const tabunganSnap = await get(tabunganRef);
-            const currentTotal = tabunganSnap.exists() ? tabunganSnap.val() : 0;
-
-            const updatedTotal = currentTotal + rawNominal;
-
-            console.log("Total Tabungan Sebelumnya:", currentTotal);
-            console.log("Nominal Pemasukan:", rawNominal);
-            console.log("Total Tabungan Setelah Update:", updatedTotal);
-            await set(tabunganRef, updatedTotal);
-
+    
+            await runTransaction(tabunganRef, (currentTotal) => {
+                const updatedTotal = (currentTotal || 0) + rawNominal;
+                console.log("Total Tabungan Diperbarui:", updatedTotal);
+                return updatedTotal;
+            });
+    
             alert("Pemasukan berhasil disimpan!");
-
+    
             // Reset form dan tutup modal
             setTanggal("");
             setNominal("");
             setRawNominal(0);
             onClose();
-
+    
             window.location.reload();
-
         } catch (err) {
             console.error("Gagal menyimpan pemasukan:", err);
             toast.error("Terjadi kesalahan saat menyimpan data.");
         }
     };
+    
 
     return (
         <div className="fixed inset-0 flex items-start justify-center bg-black bg-opacity-50 z-50 p-4 pt-20">
